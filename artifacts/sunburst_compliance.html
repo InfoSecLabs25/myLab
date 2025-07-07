@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance Framework Overlap - Sunburst</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-select {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .control-select:hover {
+            background: #2980b9;
+        }
+        
+        .control-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .control-info h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        .arc-path {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .arc-path:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Compliance Framework Overlap</h1>
+        <p class="subtitle" id="sunburst-subtitle">NIST 800-53 r5 Access Control (AC) Control Family</p>
+        
+        <div class="chart-container">
+            <svg id="sunburst" width="600" height="600"></svg>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>NIST 800-53 Core</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>IRS Pub 1075</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2ecc71;"></div>
+                <span>CMS ARC-AMPE</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>Both Frameworks</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <label for="control-family-select">Select Control Family:</label>
+            <select id="control-family-select" class="control-select">
+                <option value="AC">AC - Access Control</option>
+                <option value="AT">AT - Awareness and Training</option>
+                <option value="AU">AU - Audit and Accountability</option>
+                <option value="CM">CM - Configuration Management</option>
+                <option value="CP">CP - Contingency Planning</option>
+                <option value="IA">IA - Identification and Authentication</option>
+                <option value="IR">IR - Incident Response</option>
+                <option value="SC">SC - System and Communications Protection</option>
+            </select>
+        </div>
+            <h3>About the AT (Awareness and Training) Control Family</h3>
+            <p>The Awareness and Training control family ensures that personnel are adequately trained and aware of security responsibilities. This includes security awareness training, role-based training, and specialized training for personnel with significant information security responsibilities. With CMS ARC-AMPE's comprehensive coverage, all training controls are now consistently required across both IRS and CMS frameworks.</p>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip" style="display: none;"></div>
+
+    <script>
+        // Wait for DOM and D3 to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if D3 is loaded
+            if (typeof d3 === 'undefined') {
+                console.log('D3 not loaded, retrying...');
+                setTimeout(arguments.callee, 100);
+                return;
+            }
+            
+            // Data structure for all control families
+            const controlFamilyData = {
+                AT: {
+                    name: "NIST 800-53 r5 AT Family",
+                    description: "The Awareness and Training control family ensures that personnel are adequately trained and aware of security responsibilities.",
+                    children: [
+                        {
+                            name: "AT-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop, document, and disseminate awareness and training policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Procedure Documentation", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Dissemination", frameworks: ["NIST", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AT-2: Literacy Training",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Provide security and privacy literacy training",
+                            children: [
+                                { name: "Initial Training", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Refresher Training", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Practical Exercises", frameworks: ["NIST", "CMS"], size: 1 },
+                                { name: "Training Records", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AT-3: Role-Based Training",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Provide role-based security and privacy training",
+                            children: [
+                                { name: "Role Definition", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Training Content", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Competency Validation", frameworks: ["NIST", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AT-4: Training Records",
+                            frameworks: ["NIST", "IRS"],
+                            description: "Document and monitor security and privacy training activities",
+                            children: [
+                                { name: "Record Maintenance", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Training Tracking", frameworks: ["NIST", "IRS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                AC: {
+                    name: "NIST 800-53 r5 AC Family",
+                    description: "The Access Control family limits information system access to authorized users, processes, and devices.",
+                    children: [
+                        {
+                            name: "AC-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop, document, and disseminate access control policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Procedure Documentation", frameworks: ["NIST", "IRS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AC-2: Account Management",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Manage information system accounts",
+                            children: [
+                                { name: "Account Creation", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Account Monitoring", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Account Removal", frameworks: ["NIST", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AC-3: Access Enforcement",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Enforce approved authorizations for logical access",
+                            children: [
+                                { name: "Mandatory Access Control", frameworks: ["NIST"], size: 1 },
+                                { name: "Role-Based Access", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AC-6: Least Privilege",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Employ the principle of least privilege",
+                            children: [
+                                { name: "Privilege Review", frameworks: ["NIST", "IRS"], size: 1 },
+                                { name: "Administrative Privileges", frameworks: ["NIST", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                AU: {
+                    name: "NIST 800-53 r5 AU Family",
+                    description: "The Audit and Accountability family ensures that organizational and system-level activities are monitored.",
+                    children: [
+                        {
+                            name: "AU-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop, document, and disseminate audit policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Procedure Documentation", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AU-2: Event Logging",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Ensure audit events are defined and logged",
+                            children: [
+                                { name: "Event Definition", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Log Configuration", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "AU-3: Content of Audit Records",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Ensure audit records contain sufficient information",
+                            children: [
+                                { name: "Record Content", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Timestamp Requirements", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                CM: {
+                    name: "NIST 800-53 r5 CM Family",
+                    description: "The Configuration Management family establishes and maintains baseline configurations.",
+                    children: [
+                        {
+                            name: "CM-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop configuration management policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Baseline Management", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "CM-2: Baseline Configuration",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop and maintain baseline configurations",
+                            children: [
+                                { name: "Configuration Items", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Review Process", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                CP: {
+                    name: "NIST 800-53 r5 CP Family",
+                    description: "The Contingency Planning family establishes and maintains plans for emergency response and backup operations.",
+                    children: [
+                        {
+                            name: "CP-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop contingency planning policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Plan Testing", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "CP-2: Contingency Plan",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop and maintain contingency plan",
+                            children: [
+                                { name: "Plan Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Recovery Procedures", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                IA: {
+                    name: "NIST 800-53 r5 IA Family",
+                    description: "The Identification and Authentication family uniquely identifies and authenticates organizational users.",
+                    children: [
+                        {
+                            name: "IA-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop identification and authentication policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Identity Verification", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "IA-2: User Identification",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Uniquely identify and authenticate users",
+                            children: [
+                                { name: "Multi-Factor Authentication", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Password Requirements", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                IR: {
+                    name: "NIST 800-53 r5 IR Family",
+                    description: "The Incident Response family ensures organizational preparation, detection, analysis, containment, recovery, and user response activities.",
+                    children: [
+                        {
+                            name: "IR-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop incident response policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Response Procedures", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "IR-2: Incident Response Training",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Provide incident response training",
+                            children: [
+                                { name: "Training Program", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Simulation Exercises", frameworks: ["NIST", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                },
+                SC: {
+                    name: "NIST 800-53 r5 SC Family",
+                    description: "The System and Communications Protection family monitors, controls, and protects organizational communications and information systems.",
+                    children: [
+                        {
+                            name: "SC-1: Policy and Procedures",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Develop system and communications protection policy",
+                            children: [
+                                { name: "Policy Development", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Protection Mechanisms", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        },
+                        {
+                            name: "SC-7: Boundary Protection",
+                            frameworks: ["NIST", "IRS", "CMS"],
+                            description: "Monitor and control communications at external boundaries",
+                            children: [
+                                { name: "Firewall Configuration", frameworks: ["NIST", "IRS", "CMS"], size: 1 },
+                                { name: "Network Segmentation", frameworks: ["NIST", "IRS", "CMS"], size: 1 }
+                            ]
+                        }
+                    ]
+                }
+            };
+
+            let currentSvg = null;
+
+            // Control family titles for subtitle updates
+            const controlFamilyTitles = {
+                AC: "Access Control (AC)",
+                AT: "Awareness and Training (AT)",
+                AU: "Audit and Accountability (AU)", 
+                CM: "Configuration Management (CM)",
+                CP: "Contingency Planning (CP)",
+                IA: "Identification and Authentication (IA)",
+                IR: "Incident Response (IR)",
+                SC: "System and Communications Protection (SC)"
+            };
+
+            // Function to update the visualization
+            function updateVisualization(familyCode) {
+                const data = controlFamilyData[familyCode];
+                
+                // Update subtitle
+                const subtitleElement = document.getElementById('sunburst-subtitle');
+                if (subtitleElement) {
+                    subtitleElement.textContent = `NIST 800-53 r5 ${controlFamilyTitles[familyCode]} Control Family`;
+                }
+                
+                // Clear previous visualization
+                if (currentSvg) {
+                    currentSvg.selectAll("*").remove();
+                }
+
+                // Update description - check if elements exist first
+                const titleElement = document.querySelector('.control-info h3');
+                const descElement = document.querySelector('.control-info p');
+                
+                if (titleElement) {
+                    titleElement.textContent = `About the ${familyCode} Control Family`;
+                }
+                if (descElement) {
+                    descElement.textContent = data.description;
+                }
+
+                // Set up SVG
+                const svg = d3.select("#sunburst");
+                currentSvg = svg;
+                const width = 600;
+                const height = 600;
+                const radius = Math.min(width, height) / 2;
+
+                const g = svg.append("g")
+                    .attr("transform", `translate(${width/2},${height/2})`);
+
+                // Create hierarchy
+                const root = d3.hierarchy(data)
+                    .sum(d => d.size || 1)
+                    .sort((a, b) => b.value - a.value);
+
+                // Create partition layout
+                const partition = d3.partition()
+                    .size([2 * Math.PI, radius]);
+
+                partition(root);
+
+                // Color scale based on frameworks
+                function getColor(frameworks) {
+                    if (!frameworks) return "#95a5a6";
+                    
+                    const hasIRS = frameworks.includes("IRS");
+                    const hasCMS = frameworks.includes("CMS");
+                    
+                    if (hasIRS && hasCMS) return "#f39c12"; // Both
+                    if (hasIRS) return "#e74c3c"; // IRS only
+                    if (hasCMS) return "#2ecc71"; // CMS only
+                    return "#3498db"; // NIST core
+                }
+
+                // Create arcs
+                const arc = d3.arc()
+                    .startAngle(d => d.x0)
+                    .endAngle(d => d.x1)
+                    .innerRadius(d => d.y0)
+                    .outerRadius(d => d.y1);
+
+                // Tooltip
+                const tooltip = d3.select("#tooltip");
+
+                // Add arcs
+                const paths = g.selectAll("path")
+                    .data(root.descendants())
+                    .enter().append("path")
+                    .attr("class", "arc-path")
+                    .attr("d", arc)
+                    .style("fill", d => getColor(d.data.frameworks))
+                    .style("stroke", "#fff")
+                    .style("stroke-width", 2)
+                    .on("mouseover", function(event, d) {
+                        const frameworks = d.data.frameworks || [];
+                        const frameworkText = frameworks.length > 0 ? frameworks.join(", ") : "NIST Core";
+                        
+                        tooltip
+                            .style("display", "block")
+                            .html(`
+                                <strong>${d.data.name}</strong><br/>
+                                <em>Frameworks: ${frameworkText}</em><br/>
+                                ${d.data.description || ""}
+                            `)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 10) + "px");
+                    })
+                    .on("mousemove", function(event) {
+                        tooltip
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 10) + "px");
+                    })
+                    .on("mouseout", function() {
+                        tooltip.style("display", "none");
+                    });
+
+                // Add labels for main controls
+                g.selectAll("text")
+                    .data(root.descendants().filter(d => d.depth === 1))
+                    .enter().append("text")
+                    .attr("transform", function(d) {
+                        const angle = (d.x0 + d.x1) / 2;
+                        const radius = (d.y0 + d.y1) / 2;
+                        return `rotate(${(angle * 180 / Math.PI - 90)}) translate(${radius},0) rotate(${angle > Math.PI ? 180 : 0})`;
+                    })
+                    .attr("dy", "0.35em")
+                    .attr("text-anchor", function(d) {
+                        return (d.x0 + d.x1) / 2 > Math.PI ? "end" : "start";
+                    })
+                    .style("font-size", "11px")
+                    .style("font-weight", "bold")
+                    .style("fill", "#2c3e50")
+                    .text(d => d.data.name.split(":")[0]); // Show just the control number
+            }
+
+            // Add event listener for dropdown
+            document.getElementById('control-family-select').addEventListener('change', function() {
+                updateVisualization(this.value);
+            });
+
+            // Initialize with AC family (first in list)
+            updateVisualization('AC');
+        });
+    </script>
+</body>
+</html>
