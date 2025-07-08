@@ -10,6 +10,7 @@
         }
         .artifact-grid { 
             display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px; 
             margin-top: 30px; 
         }
@@ -26,18 +27,22 @@
 </head>
 <body>
     <h1>Strategic ITP Labs</h1>
-    <p>Welcome to my collection of Claude AI artifacts and cybersecurity projects.</p>
     
-    <h2>Featured Projects</h2>
+    <h2>Compliance Visualization Tools</h2>
     <div class="artifact-grid">
         <div class="artifact-card">
-            <h3><a href="artifacts/sunburst_compliance.html">Sunburst Compliance Dashboard</a></h3>
-            <p>Interactive compliance visualization and analysis tool. Built with Claude AI for cybersecurity compliance tracking.</p>
+            <h3><a href="artifacts/sunburst_compliance.html">Controls Sunburst Diagram</a></h3>
+            <p>Interactive sunburst visualization for cybersecurity compliance tracking and analysis.</p>
         </div>
         
         <div class="artifact-card">
-            <h3>More Projects Coming Soon</h3>
-            <p>Check back soon for additional interactive demos, tools, and cybersecurity utilities.</p>
+            <h3><a href="artifacts/nodelink_compliance.html">Controls Node-Link Diagram</a></h3>
+            <p>Node-link diagram illustrating connections among control frameworks for compliance mapping.</p>
+        </div>
+        
+        <div class="artifact-card">
+            <h3>More Tools Coming Soon</h3>
+            <p>Additional interactive compliance and cybersecurity analysis tools in development.</p>
         </div>
     </div>
     
