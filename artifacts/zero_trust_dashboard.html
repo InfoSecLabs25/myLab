@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Trust Maturity Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+        }
+        
+        .header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #3730a3;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #312e81;
+        }
+        
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        
+        .btn-indigo {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .btn-indigo:hover {
+            background-color: #4338ca;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .nav-btn {
+            padding: 0.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 50%;
+            color: #6b7280;
+        }
+        
+        .nav-btn:hover:not(:disabled) {
+            background-color: #f3f4f6;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .pillar-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        
+        .pillar-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pillar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .pillar-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 600px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+        
+        .tabs {
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab-list {
+            display: flex;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+        
+        .sub-categories {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .sub-category {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+        }
+        
+        .sub-category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .maturity-badge {
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .footer {
+            background-color: #f3f4f6;
+            border-top: 1px solid #e5e7eb;
+            padding: 1rem;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="back-btn" onclick="goHome()">
+                    ← Back to Home
+                </button>
+                <h1>Zero Trust Maturity Tracker</h1>
+            </div>
+            <div class="header-actions">
+                <span id="clientName">Sample Client Corp</span>
+                <button class="btn btn-primary" onclick="exportPDF()">
+                    📥 Export PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Controls -->
+        <div class="card">
+            <div class="controls">
+                <div class="nav-controls">
+                    <button class="nav-btn" id="prevBtn" onclick="navigateAssessment(1)">‹</button>
+                    <span id="assessmentDate">Assessment Date: 2025-05-01</span>
+                    <button class="nav-btn" id="nextBtn" onclick="navigateAssessment(-1)">›</button>
+                    <button class="btn btn-secondary" onclick="editCurrentAssessment()">
+                        ✏️ Edit
+                    </button>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-secondary" id="historyToggle" onclick="toggleHistory()">
+                        Show Historical Data
+                    </button>
+                    <button class="btn btn-indigo" onclick="initializeNewAssessment()">
+                        ➕ New Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <!-- Radar Chart -->
+            <div class="card">
+                <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Zero Trust Maturity Radar</h2>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar Chart -->
+            <div class="card">
+                <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;" id="barChartTitle">
+                    Maturity Level by Pillar
+                </h2>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar Cards -->
+        <div class="pillars-grid" id="pillarsGrid">
+            <!-- Pillar cards will be dynamically generated -->
+        </div>
+
+        <!-- Detailed View -->
+        <div class="card hidden" id="detailView">
+            <div style="display: flex; justify-between; align-items: center; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center;">
+                    <button class="nav-btn" onclick="closeDetailView()" style="margin-right: 0.75rem;">‹</button>
+                    <h2 style="font-size: 1.25rem; font-weight: 600;" id="detailTitle">Pillar Detail</h2>
+                </div>
+                <span class="maturity-badge" id="detailBadge"></span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 1rem;">Sub-Category Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="detailChart"></canvas>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 1rem;">Assessment Details</h3>
+                    <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-weight: 500; margin-bottom: 0.5rem;">Notes</h4>
+                        <p id="detailNotes" style="color: #374151;"></p>
+                    </div>
+                    
+                    <h4 style="font-weight: 500; margin-bottom: 0.5rem;">Sub-Categories</h4>
+                    <div id="subCategoriesDetail" class="sub-categories">
+                        <!-- Sub-categories will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Assessment Modal -->
+    <div class="modal" id="assessmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">New Assessment</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Assessment Date</label>
+                <input type="date" class="form-input" id="assessmentDateInput">
+            </div>
+            
+            <div class="tabs">
+                <div class="tab-list" id="tabList">
+                    <!-- Tabs will be dynamically generated -->
+                </div>
+            </div>
+            
+            <div id="tabContent">
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" id="notesInput" rows="3"></textarea>
+                </div>
+                
+                <h3 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.75rem;">Sub-Categories</h3>
+                <div id="subCategoriesForm" class="sub-categories">
+                    <!-- Sub-categories form will be dynamically generated -->
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button class="btn btn-indigo" onclick="saveAssessment()">
+                    💾 Save Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        Zero Trust Maturity Tracker | Based on CISA Zero Trust Maturity Model
+    </footer>
+
+    <script>
+        // Data structures
+        const pillars = [
+            { id: 'identity', name: 'Identity', color: '#3498db' },
+            { id: 'device', name: 'Device', color: '#2ecc71' },
+            { id: 'network', name: 'Network', color: '#e74c3c' },
+            { id: 'application', name: 'Application Workload', color: '#f39c12' },
+            { id: 'data', name: 'Data', color: '#9b59b6' }
+        ];
+
+        const maturityLevels = [
+            { id: 'traditional', name: 'Traditional', value: 1, color: '#d3d3d3' },
+            { id: 'initial', name: 'Initial', value: 2, color: '#f8c291' },
+            { id: 'advanced', name: 'Advanced', value: 3, color: '#78e08f' },
+            { id: 'optimal', name: 'Optimal', value: 4, color: '#3498db' }
+        ];
+
+        let assessmentData = {
+            currentDate: new Date().toISOString().substring(0, 10),
+            clientName: "Sample Client Corp",
+            assessments: [
+                {
+                    date: "2025-05-01",
+                    pillars: {
+                        identity: {
+                            level: "initial",
+                            notes: "MFA implemented for critical systems. Identity verification processes in progress.",
+                            subCategories: {
+                                "User Authentication": "initial",
+                                "Device Authentication": "traditional",
+                                "Machine Authentication": "initial",
+                                "Authorization": "initial",
+                                "Identity Governance": "traditional"
+                            }
+                        },
+                        device: {
+                            level: "initial",
+                            notes: "Device inventory established. Limited monitoring in place.",
+                            subCategories: {
+                                "Device Inventory": "advanced",
+                                "Device Compliance": "initial",
+                                "Device Authentication": "initial"
+                            }
+                        },
+                        network: {
+                            level: "traditional",
+                            notes: "Network segmented traditionally. Basic monitoring implemented.",
+                            subCategories: {
+                                "Network Traffic Segmentation": "traditional",
+                                "Network Protection": "traditional",
+                                "Traffic Encryption": "initial",
+                                "Network Monitoring": "initial"
+                            }
+                        },
+                        application: {
+                            level: "traditional",
+                            notes: "Legacy applications present. Limited application security testing.",
+                            subCategories: {
+                                "Application Security": "traditional",
+                                "Application Testing": "traditional",
+                                "Secure Application Delivery": "traditional"
+                            }
+                        },
+                        data: {
+                            level: "initial",
+                            notes: "Data classification started. Basic encryption in place.",
+                            subCategories: {
+                                "Data Classification": "initial",
+                                "Data Access": "initial",
+                                "Data Inspection": "traditional",
+                                "Data Encryption": "initial"
+                            }
+                        }
+                    }
+                },
+                {
+                    date: "2025-03-15",
+                    pillars: {
+                        identity: {
+                            level: "traditional",
+                            notes: "Password-based authentication primarily. Planning MFA implementation.",
+                            subCategories: {
+                                "User Authentication": "traditional",
+                                "Device Authentication": "traditional",
+                                "Machine Authentication": "traditional",
+                                "Authorization": "traditional",
+                                "Identity Governance": "traditional"
+                            }
+                        },
+                        device: {
+                            level: "traditional",
+                            notes: "Limited device tracking. No compliance verification.",
+                            subCategories: {
+                                "Device Inventory": "initial",
+                                "Device Compliance": "traditional",
+                                "Device Authentication": "traditional"
+                            }
+                        },
+                        network: {
+                            level: "traditional",
+                            notes: "Perimeter-based security model. Limited segmentation.",
+                            subCategories: {
+                                "Network Traffic Segmentation": "traditional",
+                                "Network Protection": "traditional",
+                                "Traffic Encryption": "traditional",
+                                "Network Monitoring": "traditional"
+                            }
+                        },
+                        application: {
+                            level: "traditional",
+                            notes: "Legacy applications with limited security controls.",
+                            subCategories: {
+                                "Application Security": "traditional",
+                                "Application Testing": "traditional",
+                                "Secure Application Delivery": "traditional"
+                            }
+                        },
+                        data: {
+                            level: "traditional",
+                            notes: "No formal data classification. Limited data protection.",
+                            subCategories: {
+                                "Data Classification": "traditional",
+                                "Data Access": "traditional",
+                                "Data Inspection": "traditional",
+                                "Data Encryption": "traditional"
+                            }
+                        }
+                    }
+                }
+            ]
+        };
+
+        // State
+        let selectedAssessmentIndex = 0;
+        let selectedPillar = null;
+        let showHistorical = false;
+        let newAssessment = null;
+        let editingAssessment = false;
+        let selectedTab = 'identity';
+
+        // Charts
+        let radarChart, barChart, detailChart;
+
+        // Navigation function
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // Utility functions
+        function getMaturityValue(level) {
+            const maturityLevel = maturityLevels.find(ml => ml.id === level);
+            return maturityLevel ? maturityLevel.value : 1;
+        }
+
+        function getMaturityColor(level) {
+            const maturityLevel = maturityLevels.find(ml => ml.id === level);
+            return maturityLevel ? maturityLevel.color : '#d3d3d3';
+        }
+
+        function getMaturityName(level) {
+            const maturityLevel = maturityLevels.find(ml => ml.id === level);
+            return maturityLevel ? maturityLevel.name : 'Traditional';
+        }
+
+        // Data preparation functions
+        function prepareRadarData() {
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            if (!currentAssessment) return { labels: [], datasets: [] };
+
+            const labels = pillars.map(p => p.name);
+            const data = pillars.map(p => {
+                const pillarData = currentAssessment.pillars[p.id];
+                return pillarData ? getMaturityValue(pillarData.level) : 1;
+            });
+
+            return {
+                labels: labels,
+                datasets: [{
+                    label: 'Maturity Level',
+                    data: data,
+                    backgroundColor: 'rgba(136, 132, 216, 0.2)',
+                    borderColor: 'rgba(136, 132, 216, 1)',
+                    pointBackgroundColor: 'rgba(136, 132, 216, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(136, 132, 216, 1)'
+                }]
+            };
+        }
+
+        function prepareBarData() {
+            if (showHistorical) {
+                const labels = assessmentData.assessments.map(a => a.date).reverse();
+                const datasets = pillars.map(pillar => ({
+                    label: pillar.name,
+                    data: assessmentData.assessments.map(assessment => {
+                        const pillarData = assessment.pillars[pillar.id];
+                        return pillarData ? getMaturityValue(pillarData.level) : 1;
+                    }).reverse(),
+                    backgroundColor: pillar.color,
+                    borderColor: pillar.color,
+                    borderWidth: 1
+                }));
+                
+                return { labels, datasets };
+            } else {
+                const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+                if (!currentAssessment) return { labels: [], datasets: [] };
+
+                const labels = pillars.map(p => p.name);
+                const data = pillars.map(p => {
+                    const pillarData = currentAssessment.pillars[p.id];
+                    return pillarData ? getMaturityValue(pillarData.level) : 1;
+                });
+                const colors = pillars.map(p => p.color);
+
+                return {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Maturity Level',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 1
+                    }]
+                };
+            }
+        }
+
+        function prepareDetailData(pillarId) {
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            if (!currentAssessment || !currentAssessment.pillars[pillarId]) return { labels: [], datasets: [] };
+
+            const pillarData = currentAssessment.pillars[pillarId];
+            const labels = Object.keys(pillarData.subCategories);
+            const data = Object.values(pillarData.subCategories).map(level => getMaturityValue(level));
+            const colors = Object.values(pillarData.subCategories).map(level => getMaturityColor(level));
+
+            return {
+                labels: labels,
+                datasets: [{
+                    label: 'Maturity Level',
+                    data: data,
+                    backgroundColor: colors,
+                    borderColor: colors,
+                    borderWidth: 1
+                }]
+            };
+        }
+
+        // Chart creation functions
+        function createRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: prepareRadarData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const level = maturityLevels.find(ml => ml.value === value);
+                                    return level ? level.name : '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBarChart() {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx, {
+                type: showHistorical ? 'line' : 'bar',
+                data: prepareBarData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const level = maturityLevels.find(ml => ml.value === value);
+                                    return level ? level.name : '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: showHistorical
+                        }
+                    }
+                }
+            });
+        }
+
+        function createDetailChart(pillarId) {
+            const ctx = document.getElementById('detailChart').getContext('2d');
+            if (detailChart) {
+                detailChart.destroy();
+            }
+            detailChart = new Chart(ctx, {
+                type: 'bar',
+                data: prepareDetailData(pillarId),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const level = maturityLevels.find(ml => ml.value === value);
+                                    return level ? level.name : '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // UI update functions
+        function updateUI() {
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            
+            // Update assessment date
+            document.getElementById('assessmentDate').textContent = `Assessment Date: ${currentAssessment.date}`;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = selectedAssessmentIndex === 0;
+            document.getElementById('nextBtn').disabled = selectedAssessmentIndex === assessmentData.assessments.length - 1;
+            
+            // Update charts
+            if (radarChart) {
+                radarChart.data = prepareRadarData();
+                radarChart.update();
+            }
+            
+            if (barChart) {
+                barChart.destroy();
+                createBarChart();
+            }
+            
+            // Update pillar cards
+            updatePillarCards();
+        }
+
+        function updatePillarCards() {
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            const grid = document.getElementById('pillarsGrid');
+            
+            grid.innerHTML = '';
+            
+            pillars.forEach(pillar => {
+                const pillarData = currentAssessment.pillars[pillar.id];
+                const maturityLevel = getMaturityName(pillarData.level);
+                const maturityValue = getMaturityValue(pillarData.level);
+                
+                const card = document.createElement('div');
+                card.className = 'pillar-card';
+                card.onclick = () => showPillarDetail(pillar.id);
+                
+                card.innerHTML = `
+                    <div class="pillar-header">
+                        <h3 style="font-size: 1.125rem; font-weight: 600;">${pillar.name}</h3>
+                        <div class="pillar-icon" style="background-color: ${pillar.color};">
+                            ℹ️
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.875rem; color: #6b7280;">Maturity Level</span>
+                            <span style="font-size: 0.875rem; font-weight: 500;">${maturityLevel}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${(maturityValue / 4) * 100}%; background-color: ${pillar.color};"></div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${pillarData.notes || 'No notes available'}</p>
+                    <button style="margin-top: 0.75rem; font-size: 0.875rem; color: #4f46e5; background: none; border: none; cursor: pointer; display: flex; align-items: center;">
+                        View Details →
+                    </button>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function showPillarDetail(pillarId) {
+            selectedPillar = pillarId;
+            const pillar = pillars.find(p => p.id === pillarId);
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            const pillarData = currentAssessment.pillars[pillarId];
+            
+            // Hide pillar cards and show detail view
+            document.getElementById('pillarsGrid').style.display = 'none';
+            document.getElementById('detailView').classList.remove('hidden');
+            
+            // Update detail view
+            document.getElementById('detailTitle').textContent = `${pillar.name} Pillar Detail`;
+            
+            const badge = document.getElementById('detailBadge');
+            const maturityLevel = getMaturityName(pillarData.level);
+            badge.textContent = maturityLevel;
+            badge.style.backgroundColor = getMaturityColor(pillarData.level);
+            badge.style.color = pillarData.level === 'traditional' ? '#333' : '#fff';
+            
+            document.getElementById('detailNotes').textContent = pillarData.notes || 'No notes available';
+            
+            // Update sub-categories
+            const subCategoriesDiv = document.getElementById('subCategoriesDetail');
+            subCategoriesDiv.innerHTML = '';
+            
+            Object.entries(pillarData.subCategories).forEach(([subCategory, level]) => {
+                const maturityLevel = getMaturityName(level);
+                const maturityValue = getMaturityValue(level);
+                const color = getMaturityColor(level);
+                
+                const subCatDiv = document.createElement('div');
+                subCatDiv.className = 'sub-category';
+                subCatDiv.innerHTML = `
+                    <div class="sub-category-header">
+                        <span style="font-weight: 500;">${subCategory}</span>
+                        <span class="maturity-badge" style="background-color: ${color}; color: ${level === 'traditional' ? '#333' : '#fff'};">
+                            ${maturityLevel}
+                        </span>
+                    </div>
+                    <div class="progress-bar" style="height: 0.5rem;">
+                        <div class="progress-fill" style="width: ${(maturityValue / 4) * 100}%; background-color: ${color};"></div>
+                    </div>
+                `;
+                subCategoriesDiv.appendChild(subCatDiv);
+            });
+            
+            // Create detail chart
+            createDetailChart(pillarId);
+        }
+
+        function closeDetailView() {
+            selectedPillar = null;
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('pillarsGrid').style.display = 'grid';
+        }
+
+        // Navigation functions
+        function navigateAssessment(direction) {
+            const newIndex = selectedAssessmentIndex + direction;
+            if (newIndex >= 0 && newIndex < assessmentData.assessments.length) {
+                selectedAssessmentIndex = newIndex;
+                updateUI();
+            }
+        }
+
+        function toggleHistory() {
+            showHistorical = !showHistorical;
+            const button = document.getElementById('historyToggle');
+            const title = document.getElementById('barChartTitle');
+            
+            if (showHistorical) {
+                button.textContent = 'Show Overview';
+                title.textContent = 'Historical Maturity Progression';
+            } else {
+                button.textContent = 'Show Historical Data';
+                title.textContent = 'Maturity Level by Pillar';
+            }
+            
+            barChart.destroy();
+            createBarChart();
+        }
+
+        // Modal functions
+        function initializeNewAssessment() {
+            const today = new Date().toISOString().substring(0, 10);
+            
+            newAssessment = {
+                date: today,
+                pillars: {}
+            };
+            
+            // Initialize all pillars with traditional level
+            pillars.forEach(pillar => {
+                newAssessment.pillars[pillar.id] = {
+                    level: "traditional",
+                    notes: "",
+                    subCategories: {}
+                };
+                
+                // Initialize sub-categories based on pillar
+                const subCats = getSubCategoriesForPillar(pillar.id);
+                subCats.forEach(subCat => {
+                    newAssessment.pillars[pillar.id].subCategories[subCat] = "traditional";
+                });
+            });
+            
+            editingAssessment = false;
+            selectedTab = 'identity';
+            showModal();
+        }
+
+        function editCurrentAssessment() {
+            const currentAssessment = assessmentData.assessments[selectedAssessmentIndex];
+            newAssessment = JSON.parse(JSON.stringify(currentAssessment));
+            editingAssessment = true;
+            selectedTab = 'identity';
+            showModal();
+        }
+
+        function showModal() {
+            document.getElementById('modalTitle').textContent = editingAssessment ? 'Edit Assessment' : 'New Assessment';
+            document.getElementById('assessmentDateInput').value = newAssessment.date;
+            
+            // Create tabs
+            const tabList = document.getElementById('tabList');
+            tabList.innerHTML = '';
+            
+            pillars.forEach(pillar => {
+                const tab = document.createElement('button');
+                tab.className = `tab ${pillar.id === selectedTab ? 'active' : ''}`;
+                tab.textContent = pillar.name;
+                tab.onclick = () => selectTab(pillar.id);
+                tabList.appendChild(tab);
+            });
+            
+            updateTabContent();
+            document.getElementById('assessmentModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('assessmentModal').classList.remove('show');
+            newAssessment = null;
+            editingAssessment = false;
+        }
+
+        function selectTab(pillarId) {
+            selectedTab = pillarId;
+            
+            // Update tab appearance
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateTabContent();
+        }
+
+        function updateTabContent() {
+            const pillarData = newAssessment.pillars[selectedTab];
+            
+            document.getElementById('notesInput').value = pillarData.notes;
+            
+            // Update sub-categories form
+            const subCatsDiv = document.getElementById('subCategoriesForm');
+            subCatsDiv.innerHTML = '';
+            
+            Object.entries(pillarData.subCategories).forEach(([subCategory, level]) => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                formGroup.innerHTML = `
+                    <label class="form-label">${subCategory}</label>
+                    <select class="form-input" onchange="updateSubCategory('${subCategory}', this.value)">
+                        ${maturityLevels.map(ml => 
+                            `<option value="${ml.id}" ${ml.id === level ? 'selected' : ''}>${ml.name}</option>`
+                        ).join('')}
+                    </select>
+                `;
+                subCatsDiv.appendChild(formGroup);
+            });
+        }
+
+        function updateSubCategory(subCategory, level) {
+            newAssessment.pillars[selectedTab].subCategories[subCategory] = level;
+        }
+
+        function updateNotes() {
+            newAssessment.pillars[selectedTab].notes = document.getElementById('notesInput').value;
+        }
+
+        function calculatePillarLevel(subCategories) {
+            const counts = { traditional: 0, initial: 0, advanced: 0, optimal: 0 };
+            
+            Object.values(subCategories).forEach(level => {
+                counts[level]++;
+            });
+            
+            if (counts.optimal > counts.advanced && counts.optimal > counts.initial && counts.optimal > counts.traditional) {
+                return "optimal";
+            } else if (counts.advanced > counts.initial && counts.advanced > counts.traditional) {
+                return "advanced";
+            } else if (counts.initial > counts.traditional) {
+                return "initial";
+            } else {
+                return "traditional";
+            }
+        }
+
+        function saveAssessment() {
+            // Update notes for current tab
+            newAssessment.pillars[selectedTab].notes = document.getElementById('notesInput').value;
+            
+            // Update assessment date
+            newAssessment.date = document.getElementById('assessmentDateInput').value;
+            
+            // Calculate pillar levels based on sub-categories
+            Object.keys(newAssessment.pillars).forEach(pillarId => {
+                const pillar = newAssessment.pillars[pillarId];
+                pillar.level = calculatePillarLevel(pillar.subCategories);
+            });
+            
+            if (editingAssessment) {
+                assessmentData.assessments[selectedAssessmentIndex] = newAssessment;
+            } else {
+                assessmentData.assessments.unshift(newAssessment);
+                selectedAssessmentIndex = 0;
+            }
+            
+            closeModal();
+            updateUI();
+        }
+
+        function getSubCategoriesForPillar(pillarId) {
+            const subCategories = {
+                identity: ["User Authentication", "Device Authentication", "Machine Authentication", "Authorization", "Identity Governance"],
+                device: ["Device Inventory", "Device Compliance", "Device Authentication"],
+                network: ["Network Traffic Segmentation", "Network Protection", "Traffic Encryption", "Network Monitoring"],
+                application: ["Application Security", "Application Testing", "Secure Application Delivery"],
+                data: ["Data Classification", "Data Access", "Data Inspection", "Data Encryption"]
+            };
+            return subCategories[pillarId] || [];
+        }
+
+        // Export function
+        function exportPDF() {
+            alert('Generating PDF Export...\n\nIn a production environment, this would create a professional PDF report of the current Zero Trust assessment for ' + assessmentData.clientName + ' dated ' + assessmentData.assessments[selectedAssessmentIndex].date);
+        }
+
+        // Event listeners
+        document.getElementById('notesInput').addEventListener('input', updateNotes);
+
+        // Initialize the application
+        function init() {
+            createRadarChart();
+            createBarChart();
+            updateUI();
+        }
+
+        // Start the application when the page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
