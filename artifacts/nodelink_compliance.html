@@ -1,22 +1,4 @@
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .control-select {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -54,45 +36,6 @@
             color: #7f8c8d;
             margin-bottom: 30px;
             font-size: 1.2em;
-        }
-        
-        .chart-container {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-        }
-        
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 1000;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .controls {
@@ -148,6 +91,58 @@
             background: #e74c3c;
         }
         
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .info-panel h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
         .node {
             cursor: pointer;
             transition: all 0.2s;
@@ -162,33 +157,14 @@
             stroke-width: 2;
             stroke-opacity: 0.6;
         }
-        
-        .node-text {
-            font-size: 11px;
-            font-weight: bold;
-            text-anchor: middle;
-            pointer-events: none;
-            fill: #2c3e50;
-        }
-        
-        .framework-text {
-            font-size: 10px;
-            text-anchor: middle;
-            pointer-events: none;
-            fill: #7f8c8d;
-        }
-        
-        .info-panel {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border-left: 5px solid #3498db;
-        }
-        
-        .info-panel h3 {
-            color: #2c3e50;
-            margin-top: 0;
+
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
         }
     </style>
 </head>
@@ -213,11 +189,13 @@
             </div>
             <div class="control-group">
                 <button class="control-button" data-framework="all">Show All</button>
-                <button class="control-button" data-framework="IRS">IRS Pub 1075</button> Pub 1075</button>
-                <button class="control-button" data-framework="CMS">CMS MARS-E v2.2</button>
+                <button class="control-button" data-framework="IRS">IRS Pub 1075</button>
+                <button class="control-button" data-framework="CMS">CMS ARC-AMPE</button>
                 <button class="control-button" data-framework="both">Both Frameworks</button>
             </div>
         </div>
+        
+        <div id="error-container"></div>
         
         <div class="chart-container">
             <svg id="network" width="1200" height="800"></svg>
@@ -232,475 +210,497 @@
                 <div class="legend-color" style="background: #e74c3c;"></div>
                 <span>IRS Pub 1075</span>
             </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2ecc71;"></div>
+                <span>CMS ARC-AMPE</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>Both Frameworks</span>
+            </div>
         </div>
         
         <div class="info-panel">
             <h3>Interactive Network Diagram</h3>
-            <p>This network diagram shows the relationships between NIST 800-53 controls and their implementation in IRS Pub 1075. Use the buttons above to highlight specific framework coverage. Hover over nodes to see detailed information.</p>
+            <p>This network diagram shows the relationships between NIST 800-53 controls and their implementation in IRS Pub 1075 and CMS ARC-AMPE. Use the buttons above to highlight specific framework coverage. Hover over nodes to see detailed information.</p>
         </div>
     </div>
     
     <div class="tooltip" id="tooltip" style="display: none;"></div>
 
     <script>
-        // Wait for DOM and D3 to be ready
+        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if D3 is loaded
+            // Simple D3 check - if not loaded, show error
             if (typeof d3 === 'undefined') {
-                console.log('D3 not loaded, retrying...');
-                setTimeout(arguments.callee, 100);
+                console.error('D3 library not loaded');
+                document.getElementById('error-container').innerHTML = 
+                    '<div class="error-message">D3 library failed to load. Please refresh the page.</div>';
                 return;
             }
 
-            // Control family data for network diagram
-            const controlFamilyNetworkData = {
-                AT: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "AT-1", name: "AT-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS"], description: "Develop, document, and disseminate awareness and training policy" },
-                        { id: "AT-2", name: "AT-2: Literacy Training", type: "control", frameworks: ["NIST", "IRS"], description: "Provide security and privacy literacy training" },
-                        { id: "AT-3", name: "AT-3: Role-Based Training", type: "control", frameworks: ["NIST", "IRS"], description: "Provide role-based security and privacy training" },
-                        { id: "AT-4", name: "AT-4: Training Records", type: "control", frameworks: ["NIST", "IRS"], description: "Document and monitor security and privacy training activities" },
-                        { id: "AT-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AT-1-2", name: "Procedure Documentation", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AT-2-1", name: "Initial Training", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AT-2-2", name: "Refresher Training", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AT-3-1", name: "Role Definition", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AT-3-2", name: "Training Content", type: "subcontrol", frameworks: ["NIST", "IRS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "AT-1", type: "framework-control" },
-                        { source: "NIST", target: "AT-2", type: "framework-control" },
-                        { source: "NIST", target: "AT-3", type: "framework-control" },
-                        { source: "NIST", target: "AT-4", type: "framework-control" },
-                        { source: "IRS", target: "AT-1", type: "framework-control" },
-                        { source: "IRS", target: "AT-2", type: "framework-control" },
-                        { source: "IRS", target: "AT-3", type: "framework-control" },
-                        { source: "IRS", target: "AT-4", type: "framework-control" },
-                        { source: "AT-1", target: "AT-1-1", type: "control-subcontrol" },
-                        { source: "AT-1", target: "AT-1-2", type: "control-subcontrol" },
-                        { source: "AT-2", target: "AT-2-1", type: "control-subcontrol" },
-                        { source: "AT-2", target: "AT-2-2", type: "control-subcontrol" },
-                        { source: "AT-3", target: "AT-3-1", type: "control-subcontrol" },
-                        { source: "AT-3", target: "AT-3-2", type: "control-subcontrol" }
-                    ]
-                },
-                AC: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "AC-1", name: "AC-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS"], description: "Develop, document, and disseminate access control policy" },
-                        { id: "AC-2", name: "AC-2: Account Management", type: "control", frameworks: ["NIST", "IRS"], description: "Manage information system accounts" },
-                        { id: "AC-3", name: "AC-3: Access Enforcement", type: "control", frameworks: ["NIST", "IRS"], description: "Enforce approved authorizations for logical access" },
-                        { id: "AC-6", name: "AC-6: Least Privilege", type: "control", frameworks: ["NIST", "IRS"], description: "Employ the principle of least privilege" },
-                        { id: "AC-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AC-2-1", name: "Account Creation", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AC-2-2", name: "Account Monitoring", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AC-3-1", name: "Role-Based Access", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "AC-6-1", name: "Privilege Review", type: "subcontrol", frameworks: ["NIST", "IRS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "AC-1", type: "framework-control" },
-                        { source: "NIST", target: "AC-2", type: "framework-control" },
-                        { source: "NIST", target: "AC-3", type: "framework-control" },
-                        { source: "NIST", target: "AC-6", type: "framework-control" },
-                        { source: "IRS", target: "AC-1", type: "framework-control" },
-                        { source: "IRS", target: "AC-2", type: "framework-control" },
-                        { source: "IRS", target: "AC-3", type: "framework-control" },
-                        { source: "IRS", target: "AC-6", type: "framework-control" },
-                        { source: "AC-1", target: "AC-1-1", type: "control-subcontrol" },
-                        { source: "AC-2", target: "AC-2-1", type: "control-subcontrol" },
-                        { source: "AC-2", target: "AC-2-2", type: "control-subcontrol" },
-                        { source: "AC-3", target: "AC-3-1", type: "control-subcontrol" },
-                        { source: "AC-6", target: "AC-6-1", type: "control-subcontrol" }
-                    ]
-                },
-                AU: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
-                        { id: "AU-1", name: "AU-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate audit policy" },
-                        { id: "AU-2", name: "AU-2: Event Logging", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Ensure audit events are defined and logged" },
-                        { id: "AU-3", name: "AU-3: Content of Audit Records", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Ensure audit records contain sufficient information" },
-                        { id: "AU-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "AU-2-1", name: "Event Definition", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "AU-2-2", name: "Log Configuration", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "AU-3-1", name: "Record Content", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "AU-1", type: "framework-control" },
-                        { source: "NIST", target: "AU-2", type: "framework-control" },
-                        { source: "NIST", target: "AU-3", type: "framework-control" },
-                        { source: "IRS", target: "AU-1", type: "framework-control" },
-                        { source: "IRS", target: "AU-2", type: "framework-control" },
-                        { source: "IRS", target: "AU-3", type: "framework-control" },
-                        { source: "CMS", target: "AU-1", type: "framework-control" },
-                        { source: "CMS", target: "AU-2", type: "framework-control" },
-                        { source: "CMS", target: "AU-3", type: "framework-control" },
-                        { source: "AU-1", target: "AU-1-1", type: "control-subcontrol" },
-                        { source: "AU-2", target: "AU-2-1", type: "control-subcontrol" },
-                        { source: "AU-2", target: "AU-2-2", type: "control-subcontrol" },
-                        { source: "AU-3", target: "AU-3-1", type: "control-subcontrol" }
-                    ]
-                },
-                CM: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS MARS-E v2.2", type: "framework", frameworks: ["CMS"] },
-                        { id: "CM-1", name: "CM-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop configuration management policy" },
-                        { id: "CM-2", name: "CM-2: Baseline Configuration", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop and maintain baseline configurations" },
-                        { id: "CM-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "CM-1-2", name: "Baseline Management", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "CM-2-1", name: "Configuration Items", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "CM-1", type: "framework-control" },
-                        { source: "NIST", target: "CM-2", type: "framework-control" },
-                        { source: "IRS", target: "CM-1", type: "framework-control" },
-                        { source: "IRS", target: "CM-2", type: "framework-control" },
-                        { source: "CMS", target: "CM-1", type: "framework-control" },
-                        { source: "CMS", target: "CM-2", type: "framework-control" },
-                        { source: "CM-1", target: "CM-1-1", type: "control-subcontrol" },
-                        { source: "CM-1", target: "CM-1-2", type: "control-subcontrol" },
-                        { source: "CM-2", target: "CM-2-1", type: "control-subcontrol" }
-                    ]
-                },
-                CP: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS MARS-E v2.2", type: "framework", frameworks: ["CMS"] },
-                        { id: "CP-1", name: "CP-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop contingency planning policy" },
-                        { id: "CP-2", name: "CP-2: Contingency Plan", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop and maintain contingency plan" },
-                        { id: "CP-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "CP-1-2", name: "Plan Testing", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "CP-2-1", name: "Plan Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "CP-1", type: "framework-control" },
-                        { source: "NIST", target: "CP-2", type: "framework-control" },
-                        { source: "IRS", target: "CP-1", type: "framework-control" },
-                        { source: "IRS", target: "CP-2", type: "framework-control" },
-                        { source: "CMS", target: "CP-1", type: "framework-control" },
-                        { source: "CMS", target: "CP-2", type: "framework-control" },
-                        { source: "CP-1", target: "CP-1-1", type: "control-subcontrol" },
-                        { source: "CP-1", target: "CP-1-2", type: "control-subcontrol" },
-                        { source: "CP-2", target: "CP-2-1", type: "control-subcontrol" }
-                    ]
-                },
-                IA: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS MARS-E v2.2", type: "framework", frameworks: ["CMS"] },
-                        { id: "IA-1", name: "IA-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop identification and authentication policy" },
-                        { id: "IA-2", name: "IA-2: User Identification", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Uniquely identify and authenticate users" },
-                        { id: "IA-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "IA-2-1", name: "Multi-Factor Authentication", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "IA-2-2", name: "Password Requirements", type: "subcontrol", frameworks: ["NIST", "IRS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "IA-1", type: "framework-control" },
-                        { source: "NIST", target: "IA-2", type: "framework-control" },
-                        { source: "IRS", target: "IA-1", type: "framework-control" },
-                        { source: "IRS", target: "IA-2", type: "framework-control" },
-                        { source: "CMS", target: "IA-1", type: "framework-control" },
-                        { source: "CMS", target: "IA-2", type: "framework-control" },
-                        { source: "IA-1", target: "IA-1-1", type: "control-subcontrol" },
-                        { source: "IA-2", target: "IA-2-1", type: "control-subcontrol" },
-                        { source: "IA-2", target: "IA-2-2", type: "control-subcontrol" }
-                    ]
-                },
-                IR: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS MARS-E v2.2", type: "framework", frameworks: ["CMS"] },
-                        { id: "IR-1", name: "IR-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop incident response policy" },
-                        { id: "IR-2", name: "IR-2: Incident Response Training", type: "control", frameworks: ["NIST", "IRS"], description: "Provide incident response training" },
-                        { id: "IR-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "IR-2-1", name: "Training Program", type: "subcontrol", frameworks: ["NIST", "IRS"] },
-                        { id: "IR-2-2", name: "Simulation Exercises", type: "subcontrol", frameworks: ["NIST"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "IR-1", type: "framework-control" },
-                        { source: "NIST", target: "IR-2", type: "framework-control" },
-                        { source: "IRS", target: "IR-1", type: "framework-control" },
-                        { source: "IRS", target: "IR-2", type: "framework-control" },
-                        { source: "CMS", target: "IR-1", type: "framework-control" },
-                        { source: "IR-1", target: "IR-1-1", type: "control-subcontrol" },
-                        { source: "IR-2", target: "IR-2-1", type: "control-subcontrol" },
-                        { source: "IR-2", target: "IR-2-2", type: "control-subcontrol" }
-                    ]
-                },
-                SC: {
-                    nodes: [
-                        { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
-                        { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
-                        { id: "CMS", name: "CMS MARS-E v2.2", type: "framework", frameworks: ["CMS"] },
-                        { id: "SC-1", name: "SC-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop system and communications protection policy" },
-                        { id: "SC-7", name: "SC-7: Boundary Protection", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Monitor and control communications at external boundaries" },
-                        { id: "SC-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "SC-7-1", name: "Firewall Configuration", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
-                        { id: "SC-7-2", name: "Network Segmentation", type: "subcontrol", frameworks: ["NIST", "CMS"] }
-                    ],
-                    links: [
-                        { source: "NIST", target: "SC-1", type: "framework-control" },
-                        { source: "NIST", target: "SC-7", type: "framework-control" },
-                        { source: "IRS", target: "SC-1", type: "framework-control" },
-                        { source: "IRS", target: "SC-7", type: "framework-control" },
-                        { source: "CMS", target: "SC-1", type: "framework-control" },
-                        { source: "CMS", target: "SC-7", type: "framework-control" },
-                        { source: "SC-1", target: "SC-1-1", type: "control-subcontrol" },
-                        { source: "SC-7", target: "SC-7-1", type: "control-subcontrol" },
-                        { source: "SC-7", target: "SC-7-2", type: "control-subcontrol" }
-                    ]
-                }
-            };
-
-            let currentNetworkData = controlFamilyNetworkData.AC;
-            let currentSimulation = null;
-
-            // Control family titles for subtitle updates
-            const controlFamilyTitles = {
-                AC: "Access Control (AC)",
-                AT: "Awareness and Training (AT)",
-                AU: "Audit and Accountability (AU)", 
-                CM: "Configuration Management (CM)",
-                CP: "Contingency Planning (CP)",
-                IA: "Identification and Authentication (IA)",
-                IR: "Incident Response (IR)",
-                SC: "System and Communications Protection (SC)"
-            };
-
-            // Set up SVG
-            const svg = d3.select("#network");
-            const width = 1200;
-            const height = 800;
-
-            // Tooltip
-            const tooltip = d3.select("#tooltip");
-
-            // Color function
-            function getColor(frameworks) {
-                if (!frameworks) return "#95a5a6";
-                
-                const hasIRS = frameworks.includes("IRS");
-                
-                if (hasIRS) return "#e74c3c"; // IRS
-                return "#3498db"; // NIST core
-            }
-
-            // Size function
-            function getSize(node) {
-                if (node.type === "framework") return 25;
-                if (node.type === "control") return 20;
-                return 15;
-            }
-            // Function to update network visualization
-            function updateNetworkVisualization(familyCode) {
-                currentNetworkData = controlFamilyNetworkData[familyCode];
-                
-                // Update subtitle
-                const subtitleElement = document.getElementById('network-subtitle');
-                if (subtitleElement) {
-                    subtitleElement.textContent = `NIST 800-53 r5 ${controlFamilyTitles[familyCode]} Control Family - Node-Link Diagram`;
-                }
-                
-                // Clear previous visualization
-                svg.selectAll("*").remove();
-                
-                // Stop previous simulation
-                if (currentSimulation) {
-                    currentSimulation.stop();
-                }
-
-                // Create links first
-                const link = svg.selectAll(".link")
-                    .data(currentNetworkData.links)
-                    .enter().append("line")
-                    .attr("class", "link")
-                    .style("stroke", "#7f8c8d")
-                    .style("stroke-width", 2)
-                    .style("stroke-opacity", 0.6);
-
-                // Create nodes
-                const node = svg.selectAll(".node")
-                    .data(currentNetworkData.nodes)
-                    .enter().append("circle")
-                    .attr("class", "node")
-                    .attr("r", getSize)
-                    .style("fill", d => getColor(d.frameworks))
-                    .style("stroke", "#fff")
-                    .style("stroke-width", 2);
-
-                // Add labels
-                const labels = svg.selectAll(".node-text")
-                    .data(currentNetworkData.nodes)
-                    .enter().append("text")
-                    .attr("class", "node-text")
-                    .style("font-size", "11px")
-                    .style("font-weight", "bold")
-                    .style("text-anchor", "middle")
-                    .style("pointer-events", "none")
-                    .style("fill", "#2c3e50")
-                    .text(d => {
-                        if (d.type === "framework") return d.name;
-                        if (d.type === "control") return d.name.split(":")[0];
-                        return d.name;
-                    });
-
-                // Create force simulation
-                currentSimulation = d3.forceSimulation(currentNetworkData.nodes)
-                    .force("link", d3.forceLink(currentNetworkData.links).id(d => d.id).distance(d => {
-                        if (d.type === "framework-control") return 150;
-                        if (d.type === "control-subcontrol") return 80;
-                        return 100;
-                    }))
-                    .force("charge", d3.forceManyBody().strength(-300))
-                    .force("center", d3.forceCenter(width / 2, height / 2))
-                    .force("collision", d3.forceCollide().radius(d => {
-                        if (d.type === "framework") return 40;
-                        if (d.type === "control") return 30;
-                        return 20;
-                    }));
-
-                // Add drag behavior
-                node.call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
-
-                // Add hover effects
-                node.on("mouseover", function(event, d) {
-                    const frameworks = d.frameworks || [];
-                    const frameworkText = frameworks.length > 0 ? frameworks.join(", ") : "NIST Core";
-                    
-                    tooltip
-                        .style("display", "block")
-                        .html(`
-                            <strong>${d.name}</strong><br/>
-                            <em>Type: ${d.type}</em><br/>
-                            <em>Frameworks: ${frameworkText}</em><br/>
-                            ${d.description || ""}
-                        `)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 10) + "px");
-                })
-                .on("mousemove", function(event) {
-                    tooltip
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 10) + "px");
-                })
-                .on("mouseout", function() {
-                    tooltip.style("display", "none");
-                });
-
-                // Update positions on simulation tick
-                currentSimulation.on("tick", () => {
-                    link
-                        .attr("x1", d => d.source.x)
-                        .attr("y1", d => d.source.y)
-                        .attr("x2", d => d.target.x)
-                        .attr("y2", d => d.target.y);
-
-                    node
-                        .attr("cx", d => d.x)
-                        .attr("cy", d => d.y);
-
-                    labels
-                        .attr("x", d => d.x)
-                        .attr("y", d => d.y + 35);
-                });
-
-                // Store references for filtering
-                window.currentNetworkElements = { node, link, labels };
-                
-                // Apply current filter
-                const activeButton = document.querySelector('.control-button.active');
-                if (activeButton) {
-                    const framework = activeButton.getAttribute('data-framework');
-                    highlightFramework(framework);
-                }
-            }            // Framework highlighting function
-            function highlightFramework(framework) {
-                const { node, link, labels } = window.currentNetworkElements || {};
-                
-                if (!node || !link || !labels) return;
-                
-                node.style("opacity", d => {
-                    if (framework === 'all') return 1;
-                    if (framework === 'IRS') return d.frameworks && d.frameworks.includes('IRS') ? 1 : 0.2;
-                    return 1;
-                });
-                
-                link.style("opacity", d => {
-                    if (framework === 'all') return 0.6;
-                    
-                    const sourceFrameworks = d.source.frameworks || [];
-                    const targetFrameworks = d.target.frameworks || [];
-                    
-                    if (framework === 'IRS') {
-                        return (sourceFrameworks.includes('IRS') && targetFrameworks.includes('IRS')) ? 0.8 : 0.1;
+            try {
+                // Network data including both IRS and CMS ARC-AMPE
+                const controlFamilyNetworkData = {
+                    AC: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "AC-1", name: "AC-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate access control policy" },
+                            { id: "AC-2", name: "AC-2: Account Management", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Manage information system accounts" },
+                            { id: "AC-3", name: "AC-3: Access Enforcement", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Enforce approved authorizations for logical access" },
+                            { id: "AC-6", name: "AC-6: Least Privilege", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Employ the principle of least privilege" },
+                            { id: "AC-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
+                            { id: "AC-2-1", name: "Account Creation", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
+                            { id: "AC-3-1", name: "Role-Based Access", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] }
+                        ],
+                        links: [
+                            { source: "NIST", target: "AC-1" },
+                            { source: "NIST", target: "AC-2" },
+                            { source: "NIST", target: "AC-3" },
+                            { source: "NIST", target: "AC-6" },
+                            { source: "IRS", target: "AC-1" },
+                            { source: "IRS", target: "AC-2" },
+                            { source: "IRS", target: "AC-3" },
+                            { source: "IRS", target: "AC-6" },
+                            { source: "CMS", target: "AC-1" },
+                            { source: "CMS", target: "AC-2" },
+                            { source: "CMS", target: "AC-3" },
+                            { source: "CMS", target: "AC-6" },
+                            { source: "AC-1", target: "AC-1-1" },
+                            { source: "AC-2", target: "AC-2-1" },
+                            { source: "AC-3", target: "AC-3-1" }
+                        ]
+                    },
+                    AT: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "AT-1", name: "AT-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate awareness and training policy" },
+                            { id: "AT-2", name: "AT-2: Literacy Training", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Provide security and privacy literacy training" },
+                            { id: "AT-3", name: "AT-3: Role-Based Training", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Provide role-based security and privacy training" },
+                            { id: "AT-4", name: "AT-4: Training Records", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Document and monitor security and privacy training activities" },
+                            { id: "AT-1-1", name: "Policy Development", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
+                            { id: "AT-2-1", name: "Initial Training", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] },
+                            { id: "AT-3-1", name: "Role Definition", type: "subcontrol", frameworks: ["NIST", "IRS", "CMS"] }
+                        ],
+                        links: [
+                            { source: "NIST", target: "AT-1" },
+                            { source: "NIST", target: "AT-2" },
+                            { source: "NIST", target: "AT-3" },
+                            { source: "NIST", target: "AT-4" },
+                            { source: "IRS", target: "AT-1" },
+                            { source: "IRS", target: "AT-2" },
+                            { source: "IRS", target: "AT-3" },
+                            { source: "IRS", target: "AT-4" },
+                            { source: "CMS", target: "AT-1" },
+                            { source: "CMS", target: "AT-2" },
+                            { source: "CMS", target: "AT-3" },
+                            { source: "CMS", target: "AT-4" },
+                            { source: "AT-1", target: "AT-1-1" },
+                            { source: "AT-2", target: "AT-2-1" },
+                            { source: "AT-3", target: "AT-3-1" }
+                        ]
+                    },
+                    AU: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "AU-1", name: "AU-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate audit and accountability policy" },
+                            { id: "AU-2", name: "AU-2: Event Logging", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Provide audit record generation capability" },
+                            { id: "AU-3", name: "AU-3: Content of Audit Records", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Generate audit records with required content" },
+                            { id: "AU-6", name: "AU-6: Audit Record Review", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Review and analyze audit records" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "AU-1" },
+                            { source: "NIST", target: "AU-2" },
+                            { source: "NIST", target: "AU-3" },
+                            { source: "NIST", target: "AU-6" },
+                            { source: "IRS", target: "AU-1" },
+                            { source: "IRS", target: "AU-2" },
+                            { source: "IRS", target: "AU-3" },
+                            { source: "IRS", target: "AU-6" },
+                            { source: "CMS", target: "AU-1" },
+                            { source: "CMS", target: "AU-2" },
+                            { source: "CMS", target: "AU-3" },
+                            { source: "CMS", target: "AU-6" }
+                        ]
+                    },
+                    CM: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "CM-1", name: "CM-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate configuration management policy" },
+                            { id: "CM-2", name: "CM-2: Baseline Configuration", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop and maintain baseline configurations" },
+                            { id: "CM-3", name: "CM-3: Configuration Change Control", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Control changes to system configurations" },
+                            { id: "CM-6", name: "CM-6: Configuration Settings", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Establish and document configuration settings" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "CM-1" },
+                            { source: "NIST", target: "CM-2" },
+                            { source: "NIST", target: "CM-3" },
+                            { source: "NIST", target: "CM-6" },
+                            { source: "IRS", target: "CM-1" },
+                            { source: "IRS", target: "CM-2" },
+                            { source: "IRS", target: "CM-3" },
+                            { source: "IRS", target: "CM-6" },
+                            { source: "CMS", target: "CM-1" },
+                            { source: "CMS", target: "CM-2" },
+                            { source: "CMS", target: "CM-3" },
+                            { source: "CMS", target: "CM-6" }
+                        ]
+                    },
+                    CP: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "CP-1", name: "CP-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate contingency planning policy" },
+                            { id: "CP-2", name: "CP-2: Contingency Plan", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop contingency plan for information system" },
+                            { id: "CP-3", name: "CP-3: Contingency Training", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Provide contingency plan training" },
+                            { id: "CP-4", name: "CP-4: Contingency Plan Testing", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Test contingency plan for information system" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "CP-1" },
+                            { source: "NIST", target: "CP-2" },
+                            { source: "NIST", target: "CP-3" },
+                            { source: "NIST", target: "CP-4" },
+                            { source: "IRS", target: "CP-1" },
+                            { source: "IRS", target: "CP-2" },
+                            { source: "IRS", target: "CP-3" },
+                            { source: "IRS", target: "CP-4" },
+                            { source: "CMS", target: "CP-1" },
+                            { source: "CMS", target: "CP-2" },
+                            { source: "CMS", target: "CP-3" },
+                            { source: "CMS", target: "CP-4" }
+                        ]
+                    },
+                    IA: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "IA-1", name: "IA-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate identification and authentication policy" },
+                            { id: "IA-2", name: "IA-2: Identification and Authentication", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Uniquely identify and authenticate organizational users" },
+                            { id: "IA-3", name: "IA-3: Device Identification and Authentication", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Uniquely identify and authenticate devices" },
+                            { id: "IA-5", name: "IA-5: Authenticator Management", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Manage information system authenticators" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "IA-1" },
+                            { source: "NIST", target: "IA-2" },
+                            { source: "NIST", target: "IA-3" },
+                            { source: "NIST", target: "IA-5" },
+                            { source: "IRS", target: "IA-1" },
+                            { source: "IRS", target: "IA-2" },
+                            { source: "IRS", target: "IA-3" },
+                            { source: "IRS", target: "IA-5" },
+                            { source: "CMS", target: "IA-1" },
+                            { source: "CMS", target: "IA-2" },
+                            { source: "CMS", target: "IA-3" },
+                            { source: "CMS", target: "IA-5" }
+                        ]
+                    },
+                    IR: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "IR-1", name: "IR-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate incident response policy" },
+                            { id: "IR-2", name: "IR-2: Incident Response Training", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Provide incident response training" },
+                            { id: "IR-4", name: "IR-4: Incident Handling", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Implement incident handling capability" },
+                            { id: "IR-6", name: "IR-6: Incident Reporting", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Report incidents to appropriate authorities" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "IR-1" },
+                            { source: "NIST", target: "IR-2" },
+                            { source: "NIST", target: "IR-4" },
+                            { source: "NIST", target: "IR-6" },
+                            { source: "IRS", target: "IR-1" },
+                            { source: "IRS", target: "IR-2" },
+                            { source: "IRS", target: "IR-4" },
+                            { source: "IRS", target: "IR-6" },
+                            { source: "CMS", target: "IR-1" },
+                            { source: "CMS", target: "IR-2" },
+                            { source: "CMS", target: "IR-4" },
+                            { source: "CMS", target: "IR-6" }
+                        ]
+                    },
+                    SC: {
+                        nodes: [
+                            { id: "NIST", name: "NIST 800-53 r5", type: "framework", frameworks: ["NIST"] },
+                            { id: "IRS", name: "IRS Pub 1075", type: "framework", frameworks: ["IRS"] },
+                            { id: "CMS", name: "CMS ARC-AMPE", type: "framework", frameworks: ["CMS"] },
+                            { id: "SC-1", name: "SC-1: Policy and Procedures", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Develop, document, and disseminate system and communications protection policy" },
+                            { id: "SC-7", name: "SC-7: Boundary Protection", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Monitor and control communications at external boundary" },
+                            { id: "SC-8", name: "SC-8: Transmission Confidentiality", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Protect confidentiality of transmitted information" },
+                            { id: "SC-13", name: "SC-13: Cryptographic Protection", type: "control", frameworks: ["NIST", "IRS", "CMS"], description: "Implement cryptographic mechanisms" }
+                        ],
+                        links: [
+                            { source: "NIST", target: "SC-1" },
+                            { source: "NIST", target: "SC-7" },
+                            { source: "NIST", target: "SC-8" },
+                            { source: "NIST", target: "SC-13" },
+                            { source: "IRS", target: "SC-1" },
+                            { source: "IRS", target: "SC-7" },
+                            { source: "IRS", target: "SC-8" },
+                            { source: "IRS", target: "SC-13" },
+                            { source: "CMS", target: "SC-1" },
+                            { source: "CMS", target: "SC-7" },
+                            { source: "CMS", target: "SC-8" },
+                            { source: "CMS", target: "SC-13" }
+                        ]
                     }
-                    return 0.6;
-                });
-                
-                labels.style("opacity", d => {
-                    if (framework === 'all') return 1;
-                    if (framework === 'IRS') return d.frameworks && d.frameworks.includes('IRS') ? 1 : 0.2;
-                    return 1;
-                });
-            }
+                };
 
-            // Drag functions
-            function dragstarted(event, d) {
-                if (!event.active && currentSimulation) currentSimulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
+                let currentSvg = null;
 
-            function dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
+                // Control family titles
+                const controlFamilyTitles = {
+                    AC: "Access Control (AC)",
+                    AT: "Awareness and Training (AT)",
+                    AU: "Audit and Accountability (AU)", 
+                    CM: "Configuration Management (CM)",
+                    CP: "Contingency Planning (CP)",
+                    IA: "Identification and Authentication (IA)",
+                    IR: "Incident Response (IR)",
+                    SC: "System and Communications Protection (SC)"
+                };
 
-            function dragended(event, d) {
-                if (!event.active && currentSimulation) currentSimulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
-
-            // Add event listeners to family selector
-            document.getElementById('control-family-select-network').addEventListener('change', function() {
-                updateNetworkVisualization(this.value);
-            });
-
-            // Add event listeners to filter buttons
-            document.querySelectorAll('.control-button').forEach(button => {
-                button.addEventListener('click', function(event) {
-                    // Remove active class from all buttons
-                    document.querySelectorAll('.control-button').forEach(btn => btn.classList.remove('active'));
+                // Color function
+                function getColor(frameworks) {
+                    if (!frameworks) return "#95a5a6";
                     
-                    // Add active class to clicked button
-                    this.classList.add('active');
+                    const hasIRS = frameworks.includes("IRS");
+                    const hasCMS = frameworks.includes("CMS");
                     
-                    // Get framework from data attribute
-                    const framework = this.getAttribute('data-framework');
-                    highlightFramework(framework);
-                });
-            });
+                    if (hasIRS && hasCMS) return "#f39c12"; // Both
+                    if (hasIRS) return "#e74c3c"; // IRS only
+                    if (hasCMS) return "#2ecc71"; // CMS only
+                    return "#3498db"; // NIST core
+                }
 
-            // Initialize with AC family and all frameworks shown
-            updateNetworkVisualization('AC');
-            document.querySelector('.control-button[data-framework="all"]').classList.add('active');
-        });
-    </script>
-</body>
-</html>
+                // Function to show error message
+                function showError(message) {
+                    const errorContainer = document.getElementById('error-container');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+                    }
+                }
+
+                // Function to clear error message
+                function clearError() {
+                    const errorContainer = document.getElementById('error-container');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = '';
+                    }
+                }
+
+                // Function to update the visualization
+                function updateVisualization(familyCode) {
+                    try {
+                        clearError();
+                        
+                        const data = controlFamilyNetworkData[familyCode];
+                        
+                        if (!data) {
+                            showError(`Data for control family "${familyCode}" is not available yet.`);
+                            return;
+                        }
+                        
+                        // Update subtitle
+                        const subtitleElement = document.getElementById('network-subtitle');
+                        if (subtitleElement) {
+                            subtitleElement.textContent = `NIST 800-53 r5 ${controlFamilyTitles[familyCode]} Control Family - Node-Link Diagram`;
+                        }
+                        
+                        // Clear previous visualization
+                        if (currentSvg) {
+                            currentSvg.selectAll("*").remove();
+                        }
+
+                        // Set up SVG
+                        const svg = d3.select("#network");
+                        currentSvg = svg;
+                        const width = 1200;
+                        const height = 800;
+
+                        // Create simple positioned layout
+                        const nodePositions = {};
+                        data.nodes.forEach((node, i) => {
+                            if (node.type === "framework") {
+                                // Position frameworks in a triangle
+                                if (node.id === "NIST") {
+                                    nodePositions[node.id] = { x: width/2, y: 100 };
+                                } else if (node.id === "IRS") {
+                                    nodePositions[node.id] = { x: width/4, y: height/2 };
+                                } else if (node.id === "CMS") {
+                                    nodePositions[node.id] = { x: 3*width/4, y: height/2 };
+                                }
+                            } else if (node.type === "control") {
+                                // Position controls in the center area
+                                const controlNodes = data.nodes.filter(n => n.type === "control");
+                                const controlIndex = controlNodes.findIndex(n => n.id === node.id);
+                                const angle = controlIndex * (2 * Math.PI / controlNodes.length);
+                                nodePositions[node.id] = {
+                                    x: width/2 + 200 * Math.cos(angle),
+                                    y: height/2 + 100 * Math.sin(angle)
+                                };
+                            } else {
+                                // Position subcontrols around their parent controls
+                                const angle = i * (2 * Math.PI / data.nodes.length);
+                                nodePositions[node.id] = {
+                                    x: width/2 + 300 * Math.cos(angle),
+                                    y: height/2 + 200 * Math.sin(angle)
+                                };
+                            }
+                        });
+
+                        // Create links
+                        const links = svg.selectAll(".link")
+                            .data(data.links)
+                            .enter().append("line")
+                            .attr("class", "link")
+                            .attr("x1", d => nodePositions[d.source]?.x || 0)
+                            .attr("y1", d => nodePositions[d.source]?.y || 0)
+                            .attr("x2", d => nodePositions[d.target]?.x || 0)
+                            .attr("y2", d => nodePositions[d.target]?.y || 0)
+                            .style("stroke", "#7f8c8d")
+                            .style("stroke-width", 2)
+                            .style("stroke-opacity", 0.6);
+
+                        // Create nodes
+                        const nodes = svg.selectAll(".node")
+                            .data(data.nodes)
+                            .enter().append("circle")
+                            .attr("class", "node")
+                            .attr("cx", d => nodePositions[d.id]?.x || 0)
+                            .attr("cy", d => nodePositions[d.id]?.y || 0)
+                            .attr("r", d => d.type === "framework" ? 25 : d.type === "control" ? 20 : 15)
+                            .style("fill", d => getColor(d.frameworks))
+                            .style("stroke", "#fff")
+                            .style("stroke-width", 2);
+
+                        // Add labels
+                        const labels = svg.selectAll(".node-text")
+                            .data(data.nodes)
+                            .enter().append("text")
+                            .attr("x", d => nodePositions[d.id]?.x || 0)
+                            .attr("y", d => (nodePositions[d.id]?.y || 0) + 35)
+                            .style("font-size", "11px")
+                            .style("font-weight", "bold")
+                            .style("text-anchor", "middle")
+                            .style("fill", "#2c3e50")
+                            .text(d => {
+                                if (d.type === "framework") return d.name;
+                                if (d.type === "control") return d.name.split(":")[0];
+                                return d.name;
+                            });
+
+                        // Tooltip
+                        const tooltip = d3.select("#tooltip");
+
+                        // Add hover effects
+                        nodes.on("mouseover", function(event, d) {
+                            const frameworks = d.frameworks || [];
+                            const frameworkText = frameworks.length > 0 ? frameworks.join(", ") : "NIST Core";
+                            
+                            tooltip
+                                .style("display", "block")
+                                .html(`
+                                    <strong>${d.name}</strong><br/>
+                                    <em>Type: ${d.type}</em><br/>
+                                    <em>Frameworks: ${frameworkText}</em><br/>
+                                    ${d.description || ""}
+                                `)
+                                .style("left", (event.pageX + 10) + "px")
+                                .style("top", (event.pageY - 10) + "px");
+                        })
+                        .on("mousemove", function(event) {
+                            tooltip
+                                .style("left", (event.pageX + 10) + "px")
+                                .style("top", (event.pageY - 10) + "px");
+                        })
+                        .on("mouseout", function() {
+                            tooltip.style("display", "none");
+                        });
+
+                        // Store references for filtering
+                        window.currentNetworkElements = { nodes, links, labels };
+                        
+                    } catch (error) {
+                        console.error('Error updating visualization:', error);
+                        showError(`Error updating visualization: ${error.message}`);
+                    }
+                }
+
+                // Framework highlighting function
+                function highlightFramework(framework) {
+                    try {
+                        const { nodes, links, labels } = window.currentNetworkElements || {};
+                        
+                        if (!nodes || !links || !labels) return;
+                        
+                        nodes.style("opacity", d => {
+                            if (framework === 'all') return 1;
+                            if (framework === 'IRS') return d.frameworks && d.frameworks.includes('IRS') ? 1 : 0.2;
+                            if (framework === 'CMS') return d.frameworks && d.frameworks.includes('CMS') ? 1 : 0.2;
+                            if (framework === 'both') return d.frameworks && d.frameworks.includes('IRS') && d.frameworks.includes('CMS') ? 1 : 0.2;
+                            return 1;
+                        });
+                        
+                        labels.style("opacity", d => {
+                            if (framework === 'all') return 1;
+                            if (framework === 'IRS') return d.frameworks && d.frameworks.includes('IRS') ? 1 : 0.2;
+                            if (framework === 'CMS') return d.frameworks && d.frameworks.includes('CMS') ? 1 : 0.2;
+                            if (framework === 'both') return d.frameworks && d.frameworks.includes('IRS') && d.frameworks.includes('CMS') ? 1 : 0.2;
+                            return 1;
+                        });
+                    } catch (error) {
+                        console.error('Error highlighting framework:', error);
+                    }
+                }
+
+                // Add event listener for dropdown
+                const dropdown = document.getElementById('control-family-select-network');
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        updateVisualization(this.value);
+                    });
+                }
+
+                // Add event listeners to filter buttons
+                document.querySelectorAll('.control-button').forEach(button => {
+                    button.addEventListener('click', function(event) {
+                        // Remove active class from all buttons
+                        document.querySelectorAll('.control-button').forEach(btn => btn.classList.remove('active'));
+                        
+                        // Add active class to clicked button
+                        this.classList.add('active');
+                        
+                        // Get framework from data attribute
+                        const framework = this.getAttribute('data-framework');
+                        highlightFramework(framework);
+                    });
+                });
+
+                // Initialize with AC family
+                updateVisualization('AC');
+                const defaultButton = document.querySelector('.control-button[data-framework="all"]');
+                if (defaultButton) {
+                    defaultButton.classList.add('active');
+                }
+
+            } catch (error) {
+                console.error('Main initialization error:', error);
+                const errorContainer = document.getElementById('error-container');
+                if (errorContainer) {
+                    errorContainer.innerHTML = `<div class="error-message">Failed to initialize visualization: ${error.message}</div>`;
+                }
+            }
         });
     </script>
 </body>
